@@ -685,7 +685,7 @@ details.past-box .list { margin-top: 8px; }
 
   // ---------- 탑승 온도 (manner temperature, like 당근 매너온도) ----------
   // Derived only from ride outcomes, so nobody can raise their own number by writing to their doc.
-  const TEMP_BASE = 36.5, TEMP_RIDE = 0.5, TEMP_HOST = 0.2, TEMP_NOSHOW = -5;
+  const TEMP_BASE = 36.5, TEMP_RIDE = 0.5, TEMP_HOST = 0.2, TEMP_NOSHOW = -8;
   let TEMPS = null;
   function computeTemps() {
     const t = {};
@@ -848,7 +848,7 @@ details.past-box .list { margin-top: 8px; }
   }
   const myDoc = coll => JSON.parse(JSON.stringify(state.data[coll][state.me] || {}));
   function pruneOld(map, keyToRide) {
-    for (const k of Object.keys(map)) { const r = keyToRide(k); if (!r || r.departAt < Date.now() - 14 * DAY) delete map[k]; }
+    for (const k of Object.keys(map)) { if (!keyToRide(k)) delete map[k]; } // keep history forever: 탑승 온도 needs it
     return map;
   }
 
@@ -991,8 +991,9 @@ details.past-box .list { margin-top: 8px; }
         else actions.append(h("button", { class: "btn ghost", type: "button", disabled: true, text: n > 1 ? `${n}명 모였어요` : "같이 탈 사람을 기다리는 중" }));
       }
       const locked = Date.now() >= r.departAt - LOCK_BEFORE;
-      if (n <= 1 || !locked || past) actions.append(h("button", { class: "btn danger", type: "button", disabled: busy || !canAct, onclick: () => { state.confirmDel = r.key; render(); }, text: "삭제" }));
+      if (n <= 1 || !locked) actions.append(h("button", { class: "btn danger", type: "button", disabled: busy || !canAct, onclick: () => { state.confirmDel = r.key; render(); }, text: "삭제" }));
       else if (!started) rule = h("p", { class: "rule", text: "출발 10분 전이라 방을 지울 수 없어요." });
+      else if (past) rule = h("p", { class: "rule", text: "같이 탄 기록은 탑승 온도에 쓰여서 지울 수 없어요." });
     } else if ((rider || waitingMe) && !started) {
       const locked = Date.now() >= r.departAt - LOCK_BEFORE;
       if (rider && inCheckinWindow(r) && myIn == null)
@@ -1063,7 +1064,7 @@ details.past-box .list { margin-top: 8px; }
           return h("div", { class: "temp-row" },
             h("div", { class: "temp-big" }, h("b", { text: tempText(tp.temp) }), h("small", { text: `탑승 온도 · ${tp.rides}번 탔어요` })),
             h("div", { class: "gauge" }, h("div", { class: "bar", role: "img", "aria-label": `탑승 온도 ${tempText(tp.temp)}` }, fill),
-              h("p", { text: "처음은 36.5℃. 같이 타면 +0.5℃, 방장으로 운행하면 +0.2℃ 더, 노쇼는 −5℃예요." })));
+              h("p", { text: "처음은 36.5℃. 같이 타면 +0.5℃, 방장으로 운행하면 +0.2℃ 더, 노쇼는 −8℃예요." })));
         })(),
         h("div", { class: "strikes" }, boxes, h("p", null,
           h("b", { text: `노쇼 ${s.n}회` }),
@@ -1421,7 +1422,7 @@ details.past-box .list { margin-top: 8px; }
     err.textContent = ""; $("submit").disabled = true;
     try {
       const doc = myDoc("rides"); const list = isObj(doc.list) ? doc.list : {};
-      for (const [k, r] of Object.entries(list)) if (!isObj(r) || r.departAt < Date.now() - 14 * DAY) delete list[k];
+      for (const [k, r] of Object.entries(list)) if (!isObj(r)) delete list[k];
       list["r" + Date.now().toString(36)] = ride; doc.list = list;
       await writeMine("rides", doc);
       closeSheet(); state.filter = "all"; render();
