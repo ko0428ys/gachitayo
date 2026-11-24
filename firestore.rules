@@ -1,0 +1,15 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 로그인한 사람은 모두 읽고, 자기 uid 문서만 쓸 수 있다.
+    // rides/{uid}, joins/{uid}, checkins/{uid}, votes/{uid}, surveys/{uid}
+    match /{coll}/{uid} {
+      allow read: if request.auth != null
+                  && coll in ['rides', 'joins', 'checkins', 'votes', 'surveys'];
+      allow write: if request.auth != null
+                   && request.auth.uid == uid
+                   && coll in ['rides', 'joins', 'checkins', 'votes', 'surveys']
+                   && request.resource.size() < 200000;
+    }
+  }
+}

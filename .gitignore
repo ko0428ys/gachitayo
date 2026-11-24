@@ -1,0 +1,5 @@
+android/build/
+android/assets/
+out/
+tools/
+*.apk
