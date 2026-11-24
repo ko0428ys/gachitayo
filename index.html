@@ -88,6 +88,16 @@ button { cursor: pointer; }
 .wallet div { background: var(--surface-2); border-radius: 10px; padding: 8px 10px; display: flex; flex-direction: column; min-width: 0; }
 .wallet span { font-size: 11.5px; color: var(--muted); }
 .wallet b { font-family: var(--f-display); font-weight: 400; font-size: 19px; }
+.temp-row { display: flex; align-items: center; gap: 14px; }
+.temp-big { display: flex; flex-direction: column; flex: none; }
+.temp-big b { font-family: var(--f-display); font-weight: 400; font-size: 34px; line-height: 1; font-variant-numeric: tabular-nums; }
+.temp-big small { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.gauge { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.gauge .bar { height: 10px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); overflow: hidden; }
+.gauge .bar i { display: block; height: 100%; border-radius: 999px; }
+.gauge p { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.45; }
+.tchip { display: inline-flex; align-items: center; gap: 4px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+.tchip i { width: 8px; height: 8px; border-radius: 50%; flex: none; }
 .record.blocked { box-shadow: var(--shadow), inset 0 0 0 2px var(--led); }
 
 .rule { font-size: 12px; color: var(--muted); margin-top: -6px; }
@@ -506,7 +516,7 @@ details.past-box .list { margin-top: 8px; }
     <ol>
       <li class="a" style="--d:1.55s"><b>1</b><div><strong>방 찾기 또는 만들기</strong><span>출발지·도착지·시간만 고르면 끝</span></div></li>
       <li class="a" style="--d:1.68s"><b>2</b><div><strong>오픈채팅에서 만나기</strong><span>방마다 카톡 오픈채팅이 연결돼요</span></div></li>
-      <li class="a" style="--d:1.81s"><b>3</b><div><strong>같이 타고 나눠 내기</strong><span>노쇼 2번이면 이용 정지, 약속 지키는 사람끼리만</span></div></li>
+      <li class="a" style="--d:1.81s"><b>3</b><div><strong>같이 타고 나눠 내기</strong><span>탑승 온도로 매너 확인, 노쇼 2번이면 이용 정지</span></div></li>
     </ol>
     <div class="go a" id="gate-go" style="--d:2s"></div>
   </div>
@@ -672,6 +682,40 @@ details.past-box .list { margin-top: 8px; }
     return { n, disputes };
   }
   const isBlocked = () => !!state.me && strikesOf(state.me).n >= NOSHOW_LIMIT;
+
+  // ---------- 탑승 온도 (manner temperature, like 당근 매너온도) ----------
+  // Derived only from ride outcomes, so nobody can raise their own number by writing to their doc.
+  const TEMP_BASE = 36.5, TEMP_RIDE = 0.5, TEMP_HOST = 0.2, TEMP_NOSHOW = -5;
+  let TEMPS = null;
+  function computeTemps() {
+    const t = {};
+    for (const r of allRides()) {
+      const { riders } = people(r);
+      if (riders.length < 2 || Date.now() < r.departAt) continue;
+      const v = verdict(r);
+      for (const id of riders) {
+        const e = t[id] || (t[id] = { temp: TEMP_BASE, rides: 0, noshow: 0 });
+        if (v[id] === "present") { e.temp += TEMP_RIDE + (id === r.host ? TEMP_HOST : 0); e.rides++; }
+        else if (v[id] === "noshow") { e.temp += TEMP_NOSHOW; e.noshow++; }
+      }
+    }
+    for (const e of Object.values(t)) e.temp = Math.round(Math.min(99, Math.max(0, e.temp)) * 10) / 10;
+    return t;
+  }
+  const tempOf = id => (TEMPS && TEMPS[id]) || { temp: TEMP_BASE, rides: 0, noshow: 0 };
+  function tempColor(t) {
+    if (t < 30) return "#3B6FE0";
+    if (t < 36.5) return "#2AA7A0";
+    if (t < 40) return "#F0B01E";
+    if (t < 50) return "#F27B1C";
+    return "#E0352B";
+  }
+  const tempText = t => t.toFixed(1) + "℃";
+  function tchip(id) {
+    const { temp } = tempOf(id), dot = h("i", { "aria-hidden": "true" });
+    dot.style.background = tempColor(temp);
+    return h("span", { class: "tchip", title: "탑승 온도" }, dot, tempText(temp));
+  }
   function lastObjection(id) {
     return Math.max(0, ...Object.values(mapOf("checkins", id, "obj")).filter(x => typeof x === "number"));
   }
@@ -818,7 +862,7 @@ details.past-box .list { margin-top: 8px; }
     if (!id) return h("span", { class: "seat open", "aria-hidden": "true", text: "+" });
     const p = state.mode === "live" ? state.profiles[id] : null, label = nameOf(id);
     if (p && typeof p.avatarUrl === "string" && p.avatarUrl.startsWith("https://")) { const img = h("img", { alt: "" }); img.src = p.avatarUrl; return h("span", { class: "seat", title: label }, img); }
-    const s = h("span", { class: "seat", title: label, text: label === "나" ? "나" : label.slice(-1) });
+    const s = h("span", { class: "seat", title: `${label} · ${tempText(tempOf(id).temp)}`, text: label === "나" ? "나" : label.slice(-1) });
     s.style.background = id === state.me ? "var(--ink)" : `hsl(${hueOf(id)} 45% 48%)`;
     if (id === state.me) s.style.color = "var(--bg)";
     return s;
@@ -873,7 +917,7 @@ details.past-box .list { margin-top: 8px; }
     const seatEls = []; for (let i = 0; i < seats; i++) seatEls.push(seatEl(riders[i] || null));
     const ppl = h("div", { class: "seats-row" },
       h("div", { class: "seats", "aria-label": `${seats}자리 중 ${n}명 참여` }, seatEls),
-      h("span", { class: "who", text: `방장 ${nameOf(r.host)}${n > 1 ? ` 외 ${n - 1}명` : ""}${waiting.length ? ` · 대기 ${waiting.length}명` : ""}` }));
+      h("span", { class: "who" }, `방장 ${nameOf(r.host)} `, tchip(r.host), `${n > 1 ? ` 외 ${n - 1}명` : ""}${waiting.length ? ` · 대기 ${waiting.length}명` : ""}`));
 
     let panel = null, rule = null;
     const actions = h("div", { class: "actions" });
@@ -973,6 +1017,7 @@ details.past-box .list { margin-top: 8px; }
     const ae = document.activeElement;
     if (ae && ae.dataset && ae.dataset.keep) { pendingRender = true; return; }
     pendingRender = false;
+    TEMPS = computeTemps();
     renderGate();
     const mode = $("mode");
     mode.className = "mode" + (state.mode === "live" ? " live" : state.mode === "local" ? " local" : "");
@@ -1013,6 +1058,13 @@ details.past-box .list { margin-top: 8px; }
       rec.hidden = false; rec.className = "record" + (blocked ? " blocked" : "");
       rec.replaceChildren(
         h("h2", { text: "내 기록" }),
+        (() => {
+          const tp = tempOf(state.me), fill = h("i"); fill.style.width = Math.min(100, tp.temp / 60 * 100) + "%"; fill.style.background = tempColor(tp.temp);
+          return h("div", { class: "temp-row" },
+            h("div", { class: "temp-big" }, h("b", { text: tempText(tp.temp) }), h("small", { text: `탑승 온도 · ${tp.rides}번 탔어요` })),
+            h("div", { class: "gauge" }, h("div", { class: "bar", role: "img", "aria-label": `탑승 온도 ${tempText(tp.temp)}` }, fill),
+              h("p", { text: "처음은 36.5℃. 같이 타면 +0.5℃, 방장으로 운행하면 +0.2℃ 더, 노쇼는 −5℃예요." })));
+        })(),
         h("div", { class: "strikes" }, boxes, h("p", null,
           h("b", { text: `노쇼 ${s.n}회` }),
           blocked ? " · 이용이 막혔어요. 방을 만들거나 같이 탈 수 없어요." : ` · ${NOSHOW_LIMIT}회가 되면 이용이 막혀요.`,
