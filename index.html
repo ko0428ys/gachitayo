@@ -267,6 +267,23 @@ details.past-box .list { margin-top: 8px; }
 .fab b { width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font-size: 17px; line-height: 1; }
 
 /* Sheet */
+.gate { position: fixed; inset: 0; z-index: 30; background: var(--bg); overflow-y: auto; display: flex; justify-content: center; }
+.gate-in { width: 100%; max-width: 440px; box-sizing: border-box; padding: max(56px, env(safe-area-inset-top)) 24px max(32px, env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 22px; min-height: 100%; }
+.gate .mark { width: 64px; height: 64px; border-radius: 18px; }
+.gate .mark svg { width: 42px; height: 42px; }
+.gate h2 { margin: 0; font-family: var(--f-display); font-weight: 400; font-size: 46px; line-height: 1.05; letter-spacing: -.01em; }
+.gate h2 em { font-style: normal; background: linear-gradient(transparent 58%, var(--accent) 58%, var(--accent) 92%, transparent 92%); padding: 0 4px; }
+.gate .lead { margin: 6px 0 0; font-size: 16px; color: var(--muted); line-height: 1.55; }
+.gate ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.gate li { display: flex; gap: 12px; align-items: flex-start; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+.gate li b { flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font-size: 14px; }
+.gate li strong { display: block; font-size: 15px; }
+.gate li span { font-size: 13.5px; color: var(--muted); }
+.gate .go { margin-top: auto; display: flex; flex-direction: column; gap: 10px; }
+.gate .go .btn { flex: none; min-height: 54px; font-size: 16px; display: inline-flex; align-items: center; justify-content: center; gap: 10px; }
+.gate .g-ico { width: 22px; height: 22px; border-radius: 50%; background: #fff; display: grid; place-items: center; }
+.gate .ghost { background: none; border: 0; color: var(--muted); font: inherit; font-size: 14px; text-decoration: underline; padding: 10px; cursor: pointer; }
+.gate .note { margin: 0; font-size: 12.5px; color: var(--muted); text-align: center; line-height: 1.5; }
 .scrim { position: fixed; inset: 0; background: rgba(10,11,14,.45); z-index: 20; display: flex; align-items: flex-end; justify-content: center; }
 .sheet { width: 100%; max-width: 520px; max-height: 92vh; overflow-y: auto; background: var(--surface); border-radius: 22px 22px 0 0; padding: 10px max(18px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px)); display: flex; flex-direction: column; gap: 16px; }
 .grab { width: 40px; height: 4px; border-radius: 4px; background: var(--line); align-self: center; }
@@ -463,6 +480,21 @@ details.past-box .list { margin-top: 8px; }
   </form>
 </div>
 
+<section class="gate" id="gate" aria-label="시작하기" hidden>
+  <div class="gate-in">
+    <div class="mark" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M7 19.5l2.2-6.1A3 3 0 0 1 12 11.4h8a3 3 0 0 1 2.8 2l2.2 6.1" stroke="#1E1600" stroke-width="2.4" stroke-linejoin="round"/><rect x="5" y="19" width="22" height="6.5" rx="2.2" fill="#1E1600"/><circle cx="10" cy="22.3" r="1.5" fill="#F0B01E"/><circle cx="22" cy="22.3" r="1.5" fill="#F0B01E"/><rect x="12.5" y="6.5" width="7" height="3.4" rx="1" fill="#1E1600"/></svg></div>
+    <div>
+      <h2>택시,<br><em>같이 타요</em></h2>
+      <p class="lead">세명대 ↔ 제천역·터미널, 같은 시간에 가는 학생끼리 택시 한 대로. 4명이면 1인 2,000원대예요.</p>
+    </div>
+    <ol>
+      <li><b>1</b><div><strong>방 찾기 또는 만들기</strong><span>출발지·도착지·시간만 고르면 끝</span></div></li>
+      <li><b>2</b><div><strong>오픈채팅에서 만나기</strong><span>방마다 카톡 오픈채팅이 연결돼요</span></div></li>
+      <li><b>3</b><div><strong>같이 타고 나눠 내기</strong><span>노쇼 2번이면 이용 정지, 약속 지키는 사람끼리만</span></div></li>
+    </ol>
+    <div class="go" id="gate-go"></div>
+  </div>
+</section>
 <div class="toast" id="toast" role="status" hidden></div>
 
 <script>
@@ -523,7 +555,7 @@ details.past-box .list { margin-top: 8px; }
     profiles: {}, busy: new Set(), confirmDel: null, draft: {},
     data: { rides: {}, joins: {}, checkins: {}, votes: {}, surveys: {} },
     view: "rides", sdraft: {},
-    backend: null, signedIn: false, account: "",
+    backend: null, signedIn: false, account: "", browsing: false,
   };
   let db = null, user = null, fb = null;
 
@@ -925,6 +957,7 @@ details.past-box .list { margin-top: 8px; }
     const ae = document.activeElement;
     if (ae && ae.dataset && ae.dataset.keep) { pendingRender = true; return; }
     pendingRender = false;
+    renderGate();
     const mode = $("mode");
     mode.className = "mode" + (state.mode === "live" ? " live" : state.mode === "local" ? " local" : "");
     $("mode-text").textContent = state.mode === "live" ? "실시간 공유" : state.mode === "local" ? "체험 모드" : "불러오는 중";
@@ -1401,6 +1434,32 @@ details.past-box .list { margin-top: 8px; }
       else if (c !== "auth/popup-closed-by-user" && c !== "auth/cancelled-popup-request") toast("로그인하지 못했어요. 다시 시도해 주세요.");
     }
   }
+  const G_ICON = '<svg viewBox="0 0 48 48" width="16" height="16" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.5l6.7-6.7C35.6 2.4 30.2 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.8 6C12.4 13.7 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 7l7.4 5.7c4.3-4 6.9-9.9 6.9-17.2z"/><path fill="#FBBC05" d="M10.5 28.7c-.5-1.4-.8-3-.8-4.7s.3-3.2.8-4.7l-7.8-6C1 16.6 0 20.2 0 24s1 7.4 2.7 10.7l7.8-6z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.4-5.7c-2.1 1.4-4.8 2.3-8.5 2.3-6.3 0-11.6-4.2-13.5-9.9l-7.8 6C6.6 42.6 14.6 48 24 48z"/></svg>';
+  function renderGate() {
+    const gate = $("gate");
+    const show = state.backend === "firebase" && !state.signedIn && !state.browsing && state.mode !== "loading";
+    gate.hidden = !show;
+    document.body.style.overflow = show ? "hidden" : "";
+    if (!show) return;
+    const go = $("gate-go");
+    if (go.dataset.built === (IN_APP ? "inapp" : "web")) return;
+    go.dataset.built = IN_APP ? "inapp" : "web";
+    const browse = h("button", { class: "ghost", type: "button", text: "로그인 없이 먼저 둘러보기", onclick: () => { state.browsing = true; try { sessionStorage.setItem("gachitayo-browse", "1"); } catch (_) {} render(); } });
+    if (IN_APP) {
+      const ext = externalUrl();
+      go.replaceChildren(
+        h("p", { class: "note", text: "카카오톡·에브리타임 같은 앱 안에서는 구글 로그인이 막혀 있어요. 크롬이나 사파리로 열어 주세요." }),
+        ext ? h("a", { class: "btn primary", href: ext, text: "브라우저로 열기" })
+            : h("p", { class: "note", text: "오른쪽 아래(또는 위) ⋯ 메뉴 → 'Safari로 열기' 또는 '다른 브라우저로 열기'" }),
+        browse);
+    } else {
+      const ico = h("span", { class: "g-ico" }); ico.innerHTML = G_ICON;
+      go.replaceChildren(
+        h("button", { class: "btn primary", type: "button", onclick: login }, ico, "Google로 시작하기"),
+        browse,
+        h("p", { class: "note", text: "로그인하면 구글 계정 이름과 사진이 같이 타는 사람에게 보여요." }));
+    }
+  }
   async function logout() { if (fb) { try { await fb.Au.signOut(fb.auth); } catch (_) {} } }
   async function bootFirebase() {
     let A, Au, F;
@@ -1409,6 +1468,7 @@ details.past-box .list { margin-top: 8px; }
     const app = A.initializeApp(FB_CONFIG);
     fb = { A, Au, F, auth: Au.getAuth(app), fs: F.getFirestore(app) };
     state.backend = "firebase";
+    try { state.browsing = sessionStorage.getItem("gachitayo-browse") === "1"; } catch (_) {}
     let unsubs = [];
     Au.onAuthStateChanged(fb.auth, u => {
       unsubs.forEach(f => f()); unsubs = [];
