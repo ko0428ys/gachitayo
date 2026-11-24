@@ -187,6 +187,10 @@ button { cursor: pointer; }
 
 .banner { font-size: 13px; color: var(--muted); background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
 .banner b { color: var(--ink); font-weight: 600; }
+.banner .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.banner .actions .btn { flex: none; min-height: 42px; padding: 9px 16px; font-size: 14px; }
+.banner a { color: var(--ink); font-weight: 600; }
+.linkbtn { border: 0; background: none; padding: 0; font: inherit; color: var(--ink); text-decoration: underline; cursor: pointer; }
 
 /* Filters */
 .filters { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin-inline: -2px; padding: 2px; }
@@ -390,6 +394,7 @@ details.past-box .list { margin-top: 8px; }
   <section class="stats" id="stats" aria-label="이용 통계" hidden></section>
 
   <p class="fineprint">노쇼 방지: 방에 들어가면 보증금 1,000원이 잡혀요. 출발 20분 전부터 30분 후까지 '도착했어요'를 눌러야 하고, 도착 체크한 사람들끼리 서로 탑승을 확인해요. 과반이 안 왔다고 해야 노쇼가 되고, 2번 쌓이면 이용이 막혀요. 도착 체크를 했거나 이의를 낸 사람은 분쟁으로만 남아요. 참여·도착·투표는 각자 자기 기록만 쓸 수 있어요. 보증금은 시범 기능이라 실제 돈은 오가지 않아요.</p>
+  <p class="fineprint" id="acct" hidden></p>
   <p class="fineprint">예상 요금은 충북 택시 요금(기본 4,000원 · 2km, 이후 132m당 100원)과 대략적인 도로 거리로 계산해요. 심야 할증, 신호 대기는 빠져 있어 실제와 다를 수 있어요.</p>
 </div>
 
@@ -518,8 +523,9 @@ details.past-box .list { margin-top: 8px; }
     profiles: {}, busy: new Set(), confirmDel: null, draft: {},
     data: { rides: {}, joins: {}, checkins: {}, votes: {}, surveys: {} },
     view: "rides", sdraft: {},
+    backend: null, signedIn: false, account: "",
   };
-  let db = null, user = null;
+  let db = null, user = null, fb = null;
 
   // ---------- Helpers ----------
   function h(tag, props, ...kids) {
@@ -674,7 +680,7 @@ details.past-box .list { margin-top: 8px; }
     const t9 = now - 3 * DAY;
     return {
       rides: {
-        exC: { list: { r0: { ...mk("semyung", "terminal", t0, 4, "정문 버스정류장 앞"), chat: "https://open.kakao.com/o/gTMOdvYi" },
+        exC: { list: { r0: { ...mk("semyung", "terminal", t0, 4, "정문 버스정류장 앞"), chat: "https://open.kakao.com/o/sExample0" },
                        r2: mk("terminal", "semyung", roundTo10(now + 70 * MIN), 3, "시외버스터미널 택시 승강장") } },
         exA: { list: { r1: mk("semyung", "station", roundTo10(now + 25 * MIN), 4, "정문 버스정류장 앞"),
                        r9: mk("station", "semyung", t9, 4, "제천역 택시 승강장") } },
@@ -745,6 +751,7 @@ details.past-box .list { margin-top: 8px; }
   // Write MY document in a collection (never anyone else's).
   async function writeMine(coll, doc) {
     if (state.mode === "local") { state.data[coll][state.me] = doc; saveLocal(); render(); return; }
+    if (state.backend === "firebase") { await fb.F.setDoc(fb.F.doc(fb.fs, coll, state.me), doc); return; }
     await db.doc(coll + "/" + state.me).set(doc);
   }
   const myDoc = coll => JSON.parse(JSON.stringify(state.data[coll][state.me] || {}));
@@ -762,7 +769,7 @@ details.past-box .list { margin-top: 8px; }
   function seatEl(id) {
     if (!id) return h("span", { class: "seat open", "aria-hidden": "true", text: "+" });
     const p = state.mode === "live" ? state.profiles[id] : null, label = nameOf(id);
-    if (p && p.avatarUrl) { const img = h("img", { alt: "" }); img.src = p.avatarUrl; return h("span", { class: "seat", title: label }, img); }
+    if (p && typeof p.avatarUrl === "string" && p.avatarUrl.startsWith("https://")) { const img = h("img", { alt: "" }); img.src = p.avatarUrl; return h("span", { class: "seat", title: label }, img); }
     const s = h("span", { class: "seat", title: label, text: label === "나" ? "나" : label.slice(-1) });
     s.style.background = id === state.me ? "var(--ink)" : `hsl(${hueOf(id)} 45% 48%)`;
     if (id === state.me) s.style.color = "var(--bg)";
@@ -923,13 +930,30 @@ details.past-box .list { margin-top: 8px; }
     $("mode-text").textContent = state.mode === "live" ? "실시간 공유" : state.mode === "local" ? "체험 모드" : "불러오는 중";
 
     const banner = $("banner");
-    if (state.mode === "local") {
+    if (state.mode === "local" && state.backend === "firebase") {
       banner.hidden = false;
-      banner.replaceChildren(h("b", { text: "체험 모드" }), " · 방은 이 기기에만 저장돼요. 맨 위 예시 방에서 '도착했어요'를 누르고 탑승 확인까지 해 보세요.");
+      if (IN_APP) {
+        const ext = externalUrl();
+        banner.replaceChildren(h("b", { text: "앱 안에서 열렸어요" }), " · 카카오톡·에브리타임 같은 앱 안에서는 구글 로그인이 막혀 있어요. 크롬이나 사파리로 열면 진짜 방을 만들고 같이 탈 수 있어요. 지금 보이는 방은 예시예요.",
+          ext ? h("div", { class: "actions" }, h("a", { class: "btn primary", href: ext, text: "브라우저로 열기" }))
+              : h("p", { style: "margin:8px 0 0", text: "오른쪽 아래(또는 위) ⋯ 메뉴 → '다른 브라우저로 열기' 또는 'Safari로 열기'를 눌러 주세요." }));
+      } else {
+        banner.replaceChildren(h("b", { text: "지금 보이는 방은 예시예요" }), " · 구글로 로그인하면 진짜 방을 만들고, 같은 시간에 가는 학생들과 같이 탈 수 있어요.",
+          h("div", { class: "actions" }, h("button", { class: "btn primary", type: "button", onclick: login, text: "Google로 로그인" })));
+      }
+    } else if (state.mode === "local") {
+      banner.hidden = false;
+      banner.replaceChildren(h("b", { text: "체험 모드" }), " · 방은 이 기기에만 저장돼요. 맨 위 예시 방에서 '도착했어요'를 누르고 탑승 확인까지 해 보세요.",
+        location.protocol === "file:" ? h("span", null, " 진짜로 같이 타려면 ", h("a", { href: SITE_URL, text: "같이타요 사이트" }), "에서 로그인해 주세요.") : null);
     } else if (state.mode === "live" && !state.canWrite) {
       banner.hidden = false;
       banner.replaceChildren(h("b", { text: "보기 전용" }), " · 방을 보는 것만 할 수 있어요. 방을 만들거나 같이 타려면 링크를 공유한 사람에게 참여 권한을 받아야 해요.");
     } else banner.hidden = true;
+    const acct = $("acct");
+    if (state.backend === "firebase" && state.signedIn) {
+      acct.hidden = false;
+      acct.replaceChildren(`${state.account || "구글"} 계정으로 로그인했어요 · `, h("button", { class: "linkbtn", type: "button", onclick: logout, text: "로그아웃" }));
+    } else acct.hidden = true;
 
     const rides = allRides();
     // My record
@@ -1117,6 +1141,8 @@ details.past-box .list { margin-top: 8px; }
   function failMsg(e) {
     const code = e && e.code;
     if (code === "invalid_argument") { state.canWrite = false; return "권한이 없어 저장하지 못했어요. 링크를 공유한 사람에게 참여 권한을 받아 주세요."; }
+    if (code === "permission-denied") return "저장 권한이 없어요. 로그아웃했다가 다시 로그인해 주세요.";
+    if (code === "unavailable") return "인터넷 연결을 확인해 주세요.";
     if (code === "quota_exceeded") return "저장 공간이 꽉 찼어요.";
     if (code === "resource_exhausted") return "요청이 너무 많아요. 잠시 후 다시 눌러 주세요.";
     return "연결이 불안정해요. 잠시 후 다시 시도해 주세요.";
@@ -1256,6 +1282,7 @@ details.past-box .list { margin-top: 8px; }
   }
 
   function openSheet() {
+    if (state.backend === "firebase" && !state.signedIn) { if (IN_APP) return toast("크롬이나 사파리로 열어서 로그인해 주세요."); return login(); }
     if (!state.canWrite) return;
     if (isBlocked()) return toast("노쇼 2회로 이용이 막혔어요.");
     fareTouched = false;
@@ -1344,10 +1371,71 @@ details.past-box .list { margin-top: 8px; }
     if (!ids.length) return;
     try { state.profiles = await user.profiles(ids); render(); } catch (_) {}
   }
+  // ---------- Firebase (GitHub Pages) ----------
+  const SITE_URL = "https://ko0428ys.github.io/gachitayo/";
+  const FB_CONFIG = {
+    apiKey: "AIzaSyDEHEZ2dxgODu9bjzedGqucUE-zJzXCy9o",
+    authDomain: "gachitayo-24dde.firebaseapp.com",
+    projectId: "gachitayo-24dde",
+    storageBucket: "gachitayo-24dde.firebasestorage.app",
+    messagingSenderId: "36474105867",
+    appId: "1:36474105867:web:fd7fff7645671d3423170e"
+  };
+  const FB_SDK = "https://www.gstatic.com/firebasejs/10.12.2/";
+  const UA = navigator.userAgent || "";
+  const IN_APP = /KAKAOTALK|everytime|Instagram|FBAN|FBAV|Line\/|NAVER\(inapp|DaumApps|; wv\)/i.test(UA);
+  function externalUrl() {
+    const url = location.href.split("#")[0];
+    if (/KAKAOTALK/i.test(UA)) return "kakaotalk://web/openExternal?url=" + encodeURIComponent(url);
+    if (/Android/i.test(UA)) return "intent://" + location.host + location.pathname + "#Intent;scheme=https;package=com.android.chrome;end";
+    return null;
+  }
+  async function login() {
+    if (!fb) return;
+    const provider = new fb.Au.GoogleAuthProvider();
+    try { await fb.Au.signInWithPopup(fb.auth, provider); }
+    catch (e) {
+      const c = e && e.code;
+      if (c === "auth/popup-blocked") { try { await fb.Au.signInWithRedirect(fb.auth, provider); } catch (_) { toast("팝업이 막혔어요. 브라우저에서 팝업을 허용해 주세요."); } }
+      else if (c === "auth/unauthorized-domain") toast("아직 로그인 준비 중이에요. 잠시 후 다시 시도해 주세요.");
+      else if (c !== "auth/popup-closed-by-user" && c !== "auth/cancelled-popup-request") toast("로그인하지 못했어요. 다시 시도해 주세요.");
+    }
+  }
+  async function logout() { if (fb) { try { await fb.Au.signOut(fb.auth); } catch (_) {} } }
+  async function bootFirebase() {
+    let A, Au, F;
+    try { [A, Au, F] = await Promise.all(["app", "auth", "firestore"].map(m => import(FB_SDK + "firebase-" + m + ".js"))); }
+    catch (_) { return startLocal(); }
+    const app = A.initializeApp(FB_CONFIG);
+    fb = { A, Au, F, auth: Au.getAuth(app), fs: F.getFirestore(app) };
+    state.backend = "firebase";
+    let unsubs = [];
+    Au.onAuthStateChanged(fb.auth, u => {
+      unsubs.forEach(f => f()); unsubs = [];
+      if (!u) { state.signedIn = false; state.profiles = {}; state.account = ""; return startLocal(); }
+      state.signedIn = true; state.mode = "live"; state.me = u.uid; state.canWrite = true;
+      state.account = u.displayName || u.email || "";
+      state.data = Object.fromEntries(COLLS.map(c => [c, {}]));
+      render();
+      const photo = typeof u.photoURL === "string" && u.photoURL.startsWith("https://") ? u.photoURL : "";
+      F.setDoc(F.doc(fb.fs, "profiles", u.uid), { name: (u.displayName || "학생").slice(0, 20), avatarUrl: photo.slice(0, 500), at: Date.now() }).catch(() => {});
+      for (const coll of [...COLLS, "profiles"]) {
+        unsubs.push(F.onSnapshot(F.collection(fb.fs, coll),
+          snap => {
+            const m = {}; snap.forEach(d => { m[d.id] = d.data(); });
+            if (coll === "profiles") state.profiles = m; else state.data[coll] = m;
+            render();
+          },
+          e => toast(e && e.code === "permission-denied" ? "아직 데이터베이스 준비 중이에요. 잠시 후 새로고침해 주세요." : "목록을 새로 받지 못했어요. 페이지를 다시 열어 주세요.")));
+      }
+    });
+  }
+
   async function boot() {
     render();
+    if (location.protocol === "file:") return startLocal();
     const c = window.claude;
-    if (!c || typeof c.use !== "function") return startLocal();
+    if (!c || typeof c.use !== "function") return bootFirebase();
     try { [db, user] = await Promise.all([c.use("db"), c.use("user")]); } catch (_) { db = null; }
     if (!db) return startLocal();
     state.mode = "live";

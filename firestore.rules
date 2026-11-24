@@ -1,15 +1,24 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // 로그인한 사람은 모두 읽고, 자기 uid 문서만 쓸 수 있다.
-    // rides/{uid}, joins/{uid}, checkins/{uid}, votes/{uid}, surveys/{uid}
+
+    // 이름·사진: 로그인한 사람은 모두 읽고, 자기 것만 쓴다.
+    match /profiles/{uid} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['name', 'avatarUrl', 'at'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() <= 20
+        && request.resource.data.avatarUrl is string
+        && (request.resource.data.avatarUrl == '' || request.resource.data.avatarUrl.matches('https://.*'));
+    }
+
+    // 방·참여·도착·투표·설문: 사람마다 문서 1개. 모두 읽고, 자기 uid 문서만 쓴다.
     match /{coll}/{uid} {
       allow read: if request.auth != null
-                  && coll in ['rides', 'joins', 'checkins', 'votes', 'surveys'];
-      allow write: if request.auth != null
-                   && request.auth.uid == uid
-                   && coll in ['rides', 'joins', 'checkins', 'votes', 'surveys']
-                   && request.resource.size() < 200000;
+        && coll in ['rides', 'joins', 'checkins', 'votes', 'surveys'];
+      allow write: if request.auth != null && request.auth.uid == uid
+        && coll in ['rides', 'joins', 'checkins', 'votes', 'surveys'];
     }
   }
 }

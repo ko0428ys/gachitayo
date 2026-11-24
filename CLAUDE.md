@@ -6,7 +6,9 @@
 ## 목표 (지금 하던 일)
 학교 주변 포스터 + 에브리타임 홍보 → **QR 찍으면 바로 이 사이트로 들어와서 실제로 방을 만들고 같이 타는 것.**
 
-남은 단계:
+진행 상황 (2026-11-25): GitHub Pages 켜짐, Firebase 연결 코드 들어감(`bootFirebase()`), 포스터 완성(Claude Design 아티팩트). 사용자가 Firebase 콘솔에서 Google 로그인·승인된 도메인·Firestore 생성·규칙 붙여넣기를 해야 실사용 가능.
+
+원래 계획:
 1. **Firebase로 데이터 옮기기** — 지금 `index.html`은 Claude Artifact의 `db`/`user` 기능(`window.claude.use(...)`)으로 공유 데이터를 쓰고, 그게 없으면(=GitHub Pages) **로컬 체험 모드**(localStorage, 예시 데이터)로 돈다. GitHub Pages에서는 지금 체험 모드만 된다.
    - Firebase Spark(무료): Google 로그인(Auth) + Firestore (asia-northeast3 서울, 프로덕션 모드)
    - 사용자가 `firebaseConfig`를 줘야 함. Auth → 승인된 도메인에 `ko0428ys.github.io` 추가 필요.
@@ -47,5 +49,7 @@
 - 디자인 토큰: --bg #F2F3F5, --ink #15171C, --accent #F0B01E, --led #E0352B, --ok #1B8F5A, 폰트 Do Hyeon(제목) + IBM Plex Sans KR. 다크 모드 있음.
 
 ## 주의
-- 예시 데이터의 r0 방에 사용자의 실제 오픈채팅 링크(`https://open.kakao.com/o/gTMOdvYi`)가 들어 있음. 공개 사이트에서는 빼거나 바꿀 것.
+- 예시 데이터의 오픈채팅 링크는 가짜(`sExample0`)로 바꿔 둠.
+- 카톡·에타 인앱 브라우저에서는 구글 로그인이 막혀서 '브라우저로 열기' 안내를 띄움 (`IN_APP`, `externalUrl()`).
+- APK(file://)는 Firebase 없이 체험 모드 + 사이트 링크만.
 - 사용자는 한국어로, 짧고 쉬운 말로 설명받는 걸 선호함. 코딩 초보.
