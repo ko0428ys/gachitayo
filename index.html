@@ -685,7 +685,7 @@ details.past-box .list { margin-top: 8px; }
 
   // ---------- 탑승 온도 (manner temperature, like 당근 매너온도) ----------
   // Derived only from ride outcomes, so nobody can raise their own number by writing to their doc.
-  const TEMP_BASE = 36.5, TEMP_RIDE = 0.5, TEMP_HOST = 0.2, TEMP_NOSHOW = -8;
+  const TEMP_BASE = 36.5, TEMP_RIDE = 0.5, TEMP_HOST = 0.2, TEMP_NOSHOW = -5;
   let TEMPS = null;
   function computeTemps() {
     const t = {};
@@ -1064,7 +1064,7 @@ details.past-box .list { margin-top: 8px; }
           return h("div", { class: "temp-row" },
             h("div", { class: "temp-big" }, h("b", { text: tempText(tp.temp) }), h("small", { text: `탑승 온도 · ${tp.rides}번 탔어요` })),
             h("div", { class: "gauge" }, h("div", { class: "bar", role: "img", "aria-label": `탑승 온도 ${tempText(tp.temp)}` }, fill),
-              h("p", { text: "처음은 36.5℃. 같이 타면 +0.5℃, 방장으로 운행하면 +0.2℃ 더, 노쇼는 −8℃예요." })));
+              h("p", { text: "처음은 36.5℃. 같이 타면 +0.5℃, 방장으로 운행하면 +0.2℃ 더, 노쇼는 −5℃예요." })));
         })(),
         h("div", { class: "strikes" }, boxes, h("p", null,
           h("b", { text: `노쇼 ${s.n}회` }),
