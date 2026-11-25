@@ -385,7 +385,7 @@ details.past-box .list { margin-top: 8px; }
     <button type="button" role="tab" id="view-stats" aria-selected="false">이용 통계</button>
   </div>
 
-  <section class="record" id="record" aria-label="내 노쇼 기록과 보증금" hidden></section>
+  <section class="record" id="record" aria-label="내 탑승 기록" hidden></section>
 
   <div class="banner" id="banner" hidden></div>
 
@@ -406,7 +406,7 @@ details.past-box .list { margin-top: 8px; }
       </ol>
 
       <ol class="steps" id="pane-rider" role="tabpanel" aria-labelledby="tab-rider" hidden>
-        <li><div><b>가는 방향과 시각이 맞는 방에서 '같이 타기'를 눌러요.</b><span>보증금 1,000원이 잡히고, 탑승이 확인되면 돌려받아요. 만석이면 대기할 수 있어요.</span></div></li>
+        <li><div><b>가는 방향과 시각이 맞는 방에서 '같이 타기'를 눌러요.</b><span>출발 10분 전부터는 나갈 수 없으니 신중하게 눌러요. 만석이면 대기할 수 있어요.</span></div></li>
         <li><div><b>'오픈채팅 들어가기'를 눌러 인사해요.</b><span>같이 타기를 누른 사람에게만 버튼이 보여요. 어디쯤인지, 몇 분 뒤 도착하는지 남겨 주세요.</span></div></li>
         <li><div><b>못 가게 되면 출발 10분 전까지 '나가기'를 눌러요.</b><span>그 뒤에는 나갈 수 없고, 안 나타나면 노쇼로 기록될 수 있어요.</span></div></li>
         <li><div><b>만나는 곳에 도착하면 '도착했어요'를 눌러요.</b><span>출발 20분 전부터 30분 뒤까지 열려요. 누르지 않으면 다른 사람 투표로 노쇼가 될 수 있어요.</span></div></li>
@@ -436,7 +436,7 @@ details.past-box .list { margin-top: 8px; }
   <div id="past"></div>
   <section class="stats" id="stats" aria-label="이용 통계" hidden></section>
 
-  <p class="fineprint">노쇼 방지: 방에 들어가면 보증금 1,000원이 잡혀요. 출발 20분 전부터 30분 후까지 '도착했어요'를 눌러야 하고, 도착 체크한 사람들끼리 서로 탑승을 확인해요. 과반이 안 왔다고 해야 노쇼가 되고, 2번 쌓이면 이용이 막혀요. 도착 체크를 했거나 이의를 낸 사람은 분쟁으로만 남아요. 참여·도착·투표는 각자 자기 기록만 쓸 수 있어요. 보증금은 시범 기능이라 실제 돈은 오가지 않아요.</p>
+  <p class="fineprint">노쇼 방지: 출발 10분 전부터는 방을 나갈 수 없어요. 출발 20분 전부터 30분 후까지 '도착했어요'를 눌러야 하고, 도착 체크한 사람들끼리 서로 탑승을 확인해요. 과반이 안 왔다고 해야 노쇼가 되고, 2번 쌓이면 이용이 막혀요. 도착 체크를 했거나 이의를 낸 사람은 분쟁으로만 남아요. 탑승 온도는 처음 36.5℃에서 시작해 같이 탈수록 오르고, 노쇼하면 내려가요. 참여·도착·투표는 각자 자기 기록만 쓸 수 있어요. 이 앱은 돈을 받거나 맡아 두지 않아요. 택시비는 같이 탄 사람끼리 직접 나눠 내요.</p>
   <p class="fineprint" id="acct" hidden></p>
   <p class="fineprint">예상 요금은 충북 택시 요금(기본 4,000원 · 2km, 이후 132m당 100원)과 대략적인 도로 거리로 계산해요. 심야 할증, 신호 대기는 빠져 있어 실제와 다를 수 있어요.</p>
 </div>
@@ -560,7 +560,7 @@ details.past-box .list { margin-top: 8px; }
 
   // ---------- Rules ----------
   const MIN = 60000, HOUR = 60 * MIN, DAY = 24 * HOUR;
-  const DEPOSIT = 1000, NOSHOW_LIMIT = 2;
+  const NOSHOW_LIMIT = 2;
   const LOCK_BEFORE = 10 * MIN;        // can't leave 10 min before departure
   const CHECKIN_FROM = 20 * MIN;       // check-in opens 20 min before
   const CHECKIN_UNTIL = 30 * MIN;      // and closes 30 min after
@@ -719,19 +719,17 @@ details.past-box .list { margin-top: 8px; }
   function lastObjection(id) {
     return Math.max(0, ...Object.values(mapOf("checkins", id, "obj")).filter(x => typeof x === "number"));
   }
-  function wallet(id) {
-    let held = 0, lost = 0, got = 0;
+  // What riding together has done for me: rides done, taxi fare saved.
+  function myStats(id) {
+    let rides = 0, saved = 0, hosted = 0;
     for (const r of allRides()) {
       const { riders } = people(r);
-      if (!riders.includes(id)) continue;
-      const v = verdict(r), mine = v[id];
-      const decided = Object.values(v).some(s => s === "present" || s === "noshow");
-      if (!decided) { if (Date.now() < r.departAt + VOTE_UNTIL) held += DEPOSIT; continue; }
-      if (mine === "noshow") { lost += DEPOSIT; continue; }
-      const ns = riders.filter(x => v[x] === "noshow").length, ok = riders.filter(x => v[x] === "present").length;
-      if (mine === "present" && ns) got += Math.floor(ns * DEPOSIT / Math.max(1, ok) / 10) * 10;
+      if (!riders.includes(id) || riders.length < 2 || Date.now() < r.departAt) continue;
+      if (verdict(r)[id] !== "present") continue;
+      const fare = Number(r.fare) || 0, ok = riders.filter(x => verdict(r)[x] !== "noshow").length;
+      rides++; if (id === r.host) hosted++; saved += Math.max(0, fare - perHead(fare, ok));
     }
-    return { held, lost, got };
+    return { rides, saved, hosted };
   }
   const inCheckinWindow = r => Date.now() >= r.departAt - CHECKIN_FROM && Date.now() <= r.departAt + CHECKIN_UNTIL;
   const inVoteWindow = r => Date.now() >= r.departAt && Date.now() <= r.departAt + VOTE_UNTIL;
@@ -1001,12 +999,12 @@ details.past-box .list { margin-top: 8px; }
       actions.append(h("button", { class: "btn ghost", type: "button", disabled: busy || !canAct || (locked && rider), onclick: () => leave(r),
         text: busy ? "처리 중…" : locked && rider ? "10분 전이라 못 나가요" : "나가기" }));
       rule = h("p", { class: "rule", text: rider
-        ? `보증금 ${won(DEPOSIT)}원이 잡혀 있어요. 출발 20분 전부터 '도착했어요'를 눌러야 노쇼로 찍히지 않아요.`
+        ? "출발 20분 전부터 '도착했어요'를 눌러야 노쇼로 찍히지 않아요. 출발 10분 전부터는 나갈 수 없어요."
         : "인원이 다 차서 대기 중이에요. 누가 나가면 자동으로 자리가 생겨요." });
     } else if (!started && !rider) {
       actions.append(h("button", { class: "btn primary", type: "button", disabled: busy || !canAct || blocked, onclick: () => join(r),
         text: busy ? "처리 중…" : blocked ? "노쇼 2회로 이용이 막혔어요" : left ? "같이 타기" : "대기하기" }));
-      if (!blocked) rule = h("p", { class: "rule", text: (left ? `같이 타면 보증금 ${won(DEPOSIT)}원이 잡히고, 도착 체크 후 탑승이 확인되면 돌려받아요.` : "만석이에요. 대기하면 누가 나갈 때 자리가 생겨요.") + (hasChat ? " 같이 타면 방장의 오픈채팅방 링크가 열려요." : "") });
+      if (!blocked) rule = h("p", { class: "rule", text: (left ? "같이 타면 출발 10분 전부터는 나갈 수 없어요. 탑승이 확인되면 탑승 온도가 올라가요." : "만석이에요. 대기하면 누가 나갈 때 자리가 생겨요.") + (hasChat ? " 같이 타면 방장의 오픈채팅방 링크가 열려요." : "") });
     }
 
     return h("article", { class: "ride" + (rider ? " mine" : "") + (past && !needsMe(r) ? " past" : "") },
@@ -1054,7 +1052,7 @@ details.past-box .list { margin-top: 8px; }
     // My record
     const rec = $("record");
     if (state.me && state.mode !== "loading") {
-      const s = strikesOf(state.me), w = wallet(state.me), blocked = s.n >= NOSHOW_LIMIT;
+      const s = strikesOf(state.me), w = myStats(state.me), blocked = s.n >= NOSHOW_LIMIT;
       const boxes = []; for (let i = 0; i < NOSHOW_LIMIT; i++) boxes.push(h("span", { class: "strike" + (i < s.n ? " on" : ""), "aria-hidden": "true", text: "✕" }));
       rec.hidden = false; rec.className = "record" + (blocked ? " blocked" : "");
       rec.replaceChildren(
@@ -1071,9 +1069,9 @@ details.past-box .list { margin-top: 8px; }
           blocked ? " · 이용이 막혔어요. 방을 만들거나 같이 탈 수 없어요." : ` · ${NOSHOW_LIMIT}회가 되면 이용이 막혀요.`,
           s.disputes ? ` 분쟁 ${s.disputes}회는 벌점에 들어가지 않아요.` : "")),
         h("div", { class: "wallet" },
-          h("div", null, h("span", { text: "잡혀 있는 보증금" }), h("b", { class: "num", text: won(w.held) + "원" })),
-          h("div", null, h("span", { text: "노쇼로 잃은 돈" }), h("b", { class: "num", text: won(w.lost) + "원" })),
-          h("div", null, h("span", { text: "기다려서 받은 돈" }), h("b", { class: "num", text: won(w.got) + "원" }))));
+          h("div", null, h("span", { text: "같이 탄 횟수" }), h("b", { class: "num", text: w.rides + "번" })),
+          h("div", null, h("span", { text: "아낀 택시비" }), h("b", { class: "num", text: won(w.saved) + "원" })),
+          h("div", null, h("span", { text: "방장으로 운행" }), h("b", { class: "num", text: w.hosted + "번" }))));
     } else rec.hidden = true;
 
     // Summary
