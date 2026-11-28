@@ -133,14 +133,21 @@ button { cursor: pointer; }
 .guide-tabs { display: flex; background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 3px; gap: 3px; }
 .guide-tabs button { flex: 1; border: 0; background: transparent; padding: 8px; border-radius: 9px; font-size: 14px; color: var(--muted); }
 .guide-tabs button[aria-selected="true"] { background: var(--surface); color: var(--ink); font-weight: 700; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
-.steps { margin: 0; padding: 0; list-style: none; counter-reset: st; display: flex; flex-direction: column; gap: 10px; }
-.steps li { counter-increment: st; display: grid; grid-template-columns: 26px 1fr; gap: 10px; font-size: 14px; line-height: 1.5; }
-.steps li::before { content: counter(st); width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-weight: 700; font-size: 13px; display: grid; place-items: center; }
-.steps b { font-weight: 700; }
-.steps span { color: var(--muted); display: block; font-size: 13px; }
-.manners { background: var(--surface-2); border-radius: 12px; padding: 12px 14px; font-size: 13px; color: var(--muted); }
-.manners h3 { margin: 0 0 6px; font-size: 13.5px; color: var(--ink); }
-.manners ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+.steps { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; }
+.tl li { display: grid; grid-template-columns: 62px 36px 1fr; column-gap: 10px; position: relative; padding-bottom: 14px; }
+.tl li:last-child { padding-bottom: 0; }
+.tl li:not(:last-child)::after { content: ""; position: absolute; left: calc(62px + 10px + 17px); top: 36px; bottom: 0; width: 2px; background: var(--line); }
+.tl .when { font-size: 12px; font-weight: 700; color: var(--muted); text-align: right; padding-top: 9px; line-height: 1.25; }
+.tl .dot { width: 36px; height: 36px; border-radius: 50%; background: var(--accent); display: grid; place-items: center; position: relative; z-index: 1; }
+.tl .dot svg { width: 19px; height: 19px; fill: none; stroke: var(--accent-ink); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.tl b { display: block; font-size: 15px; font-weight: 700; padding-top: 3px; }
+.tl div > span { display: block; font-size: 13px; color: var(--muted); margin-top: 1px; }
+.mini { margin-top: 6px; font-size: 12.5px; }
+.mini summary { cursor: pointer; color: var(--ink); text-decoration: underline; width: max-content; }
+.mini p { margin: 6px 0 0; padding: 8px 10px; background: var(--surface-2); border-radius: 8px; color: var(--muted); line-height: 1.5; }
+.rules4 { list-style: none; margin: 4px 0 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.rules4 li { display: flex; align-items: center; gap: 8px; background: var(--surface-2); border-radius: 10px; padding: 10px; font-size: 13px; font-weight: 600; }
+.rules4 svg { width: 18px; height: 18px; flex: none; fill: none; stroke: var(--ink); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .howto { font-size: 12.5px; color: var(--muted); background: var(--surface-2); border-radius: 10px; padding: 10px 12px; }
 .howto b { color: var(--ink); }
 
@@ -393,35 +400,13 @@ details.past-box .list { margin-top: 8px; }
     <summary>이용 안내</summary>
     <div class="guide-body">
       <div class="guide-tabs" role="tablist" aria-label="안내 대상">
-        <button type="button" role="tab" id="tab-host" aria-selected="true" aria-controls="pane-host">방을 여는 사람 (방장)</button>
+        <button type="button" role="tab" id="tab-host" aria-selected="true" aria-controls="pane-host">방장</button>
         <button type="button" role="tab" id="tab-rider" aria-selected="false" aria-controls="pane-rider">같이 타는 사람</button>
       </div>
 
-      <ol class="steps" id="pane-host" role="tabpanel" aria-labelledby="tab-host">
-        <li><div><b>카카오톡에서 오픈채팅방을 먼저 만들어요.</b><span>채팅 탭 → 오른쪽 위 새 채팅 → 오픈채팅 → 그룹 채팅방 만들기. 방 이름은 "17:30 세명대→제천역"처럼 시간과 경로를 넣으면 좋아요.</span></div></li>
-        <li><div><b>채팅방 링크를 복사해요.</b><span>만든 채팅방의 메뉴에서 공유 → 링크 복사. https://open.kakao.com/o/ 로 시작하는 주소예요.</span></div></li>
-        <li><div><b>여기서 '방 만들기'를 눌러 경로, 시각, 인원, 만나는 곳을 정하고 링크를 붙여 넣어요.</b><span>예상 택시비와 1인당 금액은 자동으로 계산돼요.</span></div></li>
-        <li><div><b>사람이 들어오면 오픈채팅에서 만나는 곳을 한 번 더 알려 주세요.</b><span>출발 10분 전부터는 사람이 모인 방을 지울 수 없어요.</span></div></li>
-        <li><div><b>출발 20분 전부터 '도착했어요'를 누르고, 출발 뒤 탑승 확인을 해요.</b><span>택시비는 방장이 먼저 내고, 오픈채팅에서 1인당 금액을 송금받으면 편해요.</span></div></li>
-      </ol>
-
-      <ol class="steps" id="pane-rider" role="tabpanel" aria-labelledby="tab-rider" hidden>
-        <li><div><b>가는 방향과 시각이 맞는 방에서 '같이 타기'를 눌러요.</b><span>출발 10분 전부터는 나갈 수 없으니 신중하게 눌러요. 만석이면 대기할 수 있어요.</span></div></li>
-        <li><div><b>'오픈채팅 들어가기'를 눌러 인사해요.</b><span>같이 타기를 누른 사람에게만 버튼이 보여요. 어디쯤인지, 몇 분 뒤 도착하는지 남겨 주세요.</span></div></li>
-        <li><div><b>못 가게 되면 출발 10분 전까지 '나가기'를 눌러요.</b><span>그 뒤에는 나갈 수 없고, 안 나타나면 노쇼로 기록될 수 있어요.</span></div></li>
-        <li><div><b>만나는 곳에 도착하면 '도착했어요'를 눌러요.</b><span>출발 20분 전부터 30분 뒤까지 열려요. 누르지 않으면 다른 사람 투표로 노쇼가 될 수 있어요.</span></div></li>
-        <li><div><b>출발 뒤 누가 탔는지 확인하고, 택시비 1인당 금액을 방장에게 보내요.</b><span>노쇼로 잘못 찍혔다면 24시간 안에 이의 제기를 할 수 있어요.</span></div></li>
-      </ol>
-
-      <div class="manners">
-        <h3>같이 탈 때 지켜 주세요</h3>
-        <ul>
-          <li>늦을 것 같으면 오픈채팅으로 먼저 알려 주세요.</li>
-          <li>노쇼가 2번 쌓이면 방 만들기와 같이 타기가 막혀요.</li>
-          <li>오픈채팅은 익명 프로필을 쓰고, 전화번호나 집 주소는 채팅방에 올리지 마세요.</li>
-          <li>밤늦은 시간에는 사람이 많은 곳을 만나는 곳으로 정해 주세요.</li>
-        </ul>
-      </div>
+      <ol class="steps tl" id="pane-host" role="tabpanel" aria-labelledby="tab-host"><li><span class="when">먼저</span><span class="dot"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg></span><div><b>카톡 오픈채팅방 만들기</b><span>링크를 복사해 두세요</span><details class="mini"><summary>오픈채팅방 만드는 법</summary><p>카카오톡 채팅 탭 → 오른쪽 위 말풍선+ → 오픈채팅 → 그룹 채팅방 만들기 → 방 메뉴에서 공유 → 링크 복사</p></details></div></li><li><span class="when">지금</span><span class="dot"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span><div><b>'방 만들기' 누르기</b><span>경로·시간·인원 고르고 링크 붙여 넣기</span></div></li><li><span class="when">모이면</span><span class="dot"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg></span><div><b>만날 곳 다시 알리기</b><span>오픈채팅에서 한 번 더</span></div></li><li><span class="when">20분 전</span><span class="dot"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><div><b>'도착했어요' 누르기</b><span>만나는 곳에 도착하면</span></div></li><li><span class="when">출발 후</span><span class="dot"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7l3 10 3-8 2 0 3 8 3-10"/><path d="M3 11h18M3 14h18"/></svg></span><div><b>탑승 확인 + 택시비 받기</b><span>1인분은 앱이 계산해 줘요</span></div></li></ol>
+      <ol class="steps tl" id="pane-rider" role="tabpanel" aria-labelledby="tab-rider" hidden><li><span class="when">지금</span><span class="dot"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></svg></span><div><b>방 고르고 '같이 타기'</b><span>방향·시간이 맞는 방으로</span></div></li><li><span class="when">바로</span><span class="dot"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg></span><div><b>오픈채팅 들어가서 인사</b><span>버튼은 참여한 사람에게만 보여요</span></div></li><li><span class="when">10분 전까지</span><span class="dot"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h5v16h-5"/><path d="M10 8l-4 4 4 4M6 12h9"/></svg></span><div><b>못 가면 '나가기'</b><span>10분 전부터는 잠겨요</span></div></li><li><span class="when">20분 전</span><span class="dot"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg></span><div><b>도착하면 '도착했어요'</b><span>안 누르면 노쇼가 될 수 있어요</span></div></li><li><span class="when">출발 후</span><span class="dot"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg></span><div><b>탑승 확인 + 1인분 송금</b><span>잘못 찍히면 24시간 안에 이의 제기</span></div></li></ol>
+      <ul class="rules4" aria-label="같이 탈 때 지켜 주세요"><li><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>늦으면 미리 말하기</span></li><li><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M6 6l12 12"/></svg><span>노쇼 2번이면 정지</span></li><li><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><span>번호·주소는 비밀</span></li><li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg><span>밤엔 밝은 곳에서</span></li></ul>
     </div>
   </details>
 
