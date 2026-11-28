@@ -61,6 +61,8 @@ button { cursor: pointer; }
 .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .mark { width: 40px; height: 40px; border-radius: 11px; background: var(--accent); display: grid; place-items: center; flex: none; }
 .mark svg { width: 26px; height: 26px; }
+.proto { display: inline-block; vertical-align: 4px; margin-left: 6px; padding: 2px 7px; border-radius: 999px; background: var(--ink); color: var(--bg); font-family: var(--f-body, inherit); font-size: 10.5px; font-weight: 700; letter-spacing: .02em; }
+.gate .proto-note { display: inline-block; margin: 14px 0 0; padding: 5px 11px; border: 1.5px solid var(--ink); border-radius: 999px; font-size: 12.5px; font-weight: 700; }
 .brand h1 { margin: 0; font-family: var(--f-display); font-weight: 400; font-size: 26px; line-height: 1; letter-spacing: -.01em; }
 .brand p { margin: 3px 0 0; font-size: 12.5px; color: var(--muted); }
 .mode { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); font-size: 12px; color: var(--muted); white-space: nowrap; }
@@ -375,8 +377,8 @@ details.past-box .list { margin-top: 8px; }
         <svg viewBox="0 0 32 32" fill="none"><path d="M7 19.5l2.2-6.1A3 3 0 0 1 12 11.4h8a3 3 0 0 1 2.8 2l2.2 6.1" stroke="#1E1600" stroke-width="2.4" stroke-linejoin="round"/><rect x="5" y="19" width="22" height="6.5" rx="2.2" fill="#1E1600"/><circle cx="10" cy="22.3" r="1.5" fill="#F0B01E"/><circle cx="22" cy="22.3" r="1.5" fill="#F0B01E"/><rect x="12.5" y="6.5" width="7" height="3.4" rx="1" fill="#1E1600"/></svg>
       </div>
       <div>
-        <h1>같이타요</h1>
-        <p>세명대 · 제천 택시 동승</p>
+        <h1>같이타요<span class="proto">프로토타입</span></h1>
+        <p>세명대 · 제천 택시 동승 예약</p>
       </div>
     </div>
     <span class="mode" id="mode"><i></i><span id="mode-text">불러오는 중</span></span>
@@ -423,6 +425,7 @@ details.past-box .list { margin-top: 8px; }
 
   <p class="fineprint">노쇼 방지: 출발 10분 전부터는 방을 나갈 수 없어요. 출발 20분 전부터 30분 후까지 '도착했어요'를 눌러야 하고, 도착 체크한 사람들끼리 서로 탑승을 확인해요. 과반이 안 왔다고 해야 노쇼가 되고, 2번 쌓이면 이용이 막혀요. 도착 체크를 했거나 이의를 낸 사람은 분쟁으로만 남아요. 탑승 온도는 처음 36.5℃에서 시작해 같이 탈수록 오르고, 노쇼하면 내려가요. 참여·도착·투표는 각자 자기 기록만 쓸 수 있어요. 이 앱은 돈을 받거나 맡아 두지 않아요. 택시비는 같이 탄 사람끼리 직접 나눠 내요.</p>
   <p class="fineprint" id="acct" hidden></p>
+  <p class="fineprint">같이타요는 세명대 평생교육방법론 리빙랩 수업에서 만든 프로토타입(시범 서비스)이에요. 기능이 바뀌거나 기록이 초기화될 수 있어요.</p>
   <p class="fineprint">예상 요금은 충북 택시 요금(기본 4,000원 · 2km, 이후 132m당 100원)과 대략적인 도로 거리로 계산해요. 심야 할증, 신호 대기는 빠져 있어 실제와 다를 수 있어요.</p>
 </div>
 
@@ -496,7 +499,8 @@ details.past-box .list { margin-top: 8px; }
     <div class="mark" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M7 19.5l2.2-6.1A3 3 0 0 1 12 11.4h8a3 3 0 0 1 2.8 2l2.2 6.1" stroke="#1E1600" stroke-width="2.4" stroke-linejoin="round"/><rect x="5" y="19" width="22" height="6.5" rx="2.2" fill="#1E1600"/><circle cx="10" cy="22.3" r="1.5" fill="#F0B01E"/><circle cx="22" cy="22.3" r="1.5" fill="#F0B01E"/><rect x="12.5" y="6.5" width="7" height="3.4" rx="1" fill="#1E1600"/></svg></div>
     <div>
       <h2><span class="a" style="--d:.45s">같이</span> <em class="a" style="--d:.7s">가</em><span class="a drop" style="--d:1.05s">!</span><br><span class="a blue" style="--d:1.2s">세명대</span></h2>
-      <p class="lead a" style="--d:1.4s">세명대 ↔ 제천역·터미널, 같은 시간에 가는 학생끼리 택시 한 대로. 4명이면 1인 2,000원대예요.</p>
+      <p class="proto-note a" style="--d:1.3s">평생교육방법론 리빙랩 프로토타입 · 시범 운영 중</p>
+      <p class="lead a" style="--d:1.4s; margin-top: 10px">세명대 ↔ 제천역·터미널, 같은 시간에 가는 학생끼리 택시 한 대로. 4명이면 1인 2,000원대예요.</p>
     </div>
     <ol>
       <li class="a" style="--d:1.55s"><b>1</b><div><strong>방 찾기 또는 만들기</strong><span>출발지·도착지·시간만 고르면 끝</span></div></li>
