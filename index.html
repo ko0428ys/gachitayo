@@ -292,14 +292,14 @@ details.past-box .list { margin-top: 8px; }
 .gate .mark { width: 64px; height: 64px; border-radius: 18px; }
 .gate .mark svg { width: 42px; height: 42px; }
 .gate h2 { margin: 0; font-family: var(--f-display); font-weight: 400; font-size: 46px; line-height: 1.05; letter-spacing: -.01em; }
-.gate h2 em { font-style: normal; font-size: 1.3em; display: inline-block; padding: 0 4px; background-image: linear-gradient(var(--accent), var(--accent)); background-repeat: no-repeat; background-position: 0 88%; background-size: 100% 34%; }
+.gate h2 em { font-style: normal; display: inline-block; }
 .gate h2 .blue { color: var(--blue); }
 .gate h2 span, .gate h2 em { display: inline-block; }
 @media (prefers-reduced-motion: no-preference) {
   .gate .mark { animation: g-drive .9s cubic-bezier(.2,.9,.25,1) .1s both; }
   .gate .mark svg { animation: g-bump .5s ease-in-out .95s 2; }
   .gate .a { animation: g-up .55s cubic-bezier(.2,.8,.2,1) var(--d, 0s) both; }
-  .gate em.a { animation: g-pop .6s cubic-bezier(.3,1.6,.4,1) var(--d, 0s) both, g-sweep .45s ease-out calc(var(--d, 0s) + .35s) both; }
+  .gate em.a { animation: g-pop .6s cubic-bezier(.3,1.6,.4,1) var(--d, 0s) both; }
   .gate .drop { animation-name: g-drop; }
 }
 @keyframes g-drive { 0% { transform: translateX(-160px) rotate(-8deg); opacity: 0; } 55% { transform: translateX(14px) rotate(3deg); opacity: 1; } 78% { transform: translateX(-5px) rotate(-1deg); } 100% { transform: none; } }
@@ -498,7 +498,7 @@ details.past-box .list { margin-top: 8px; }
   <div class="gate-in">
     <div class="mark" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M7 19.5l2.2-6.1A3 3 0 0 1 12 11.4h8a3 3 0 0 1 2.8 2l2.2 6.1" stroke="#1E1600" stroke-width="2.4" stroke-linejoin="round"/><rect x="5" y="19" width="22" height="6.5" rx="2.2" fill="#1E1600"/><circle cx="10" cy="22.3" r="1.5" fill="#F0B01E"/><circle cx="22" cy="22.3" r="1.5" fill="#F0B01E"/><rect x="12.5" y="6.5" width="7" height="3.4" rx="1" fill="#1E1600"/></svg></div>
     <div>
-      <h2><span class="a" style="--d:.45s">같이</span> <em class="a" style="--d:.7s">가</em><span class="a drop" style="--d:1.05s">!</span><br><span class="a blue" style="--d:1.2s">세명대</span></h2>
+      <h2><span class="a" style="--d:.45s">같이</span> <em class="a" style="--d:.7s">가요</em><span class="a drop" style="--d:1.05s">!</span><br><span class="a blue" style="--d:1.2s">세명대</span></h2>
       <p class="proto-note a" style="--d:1.3s">평생교육방법론 리빙랩 프로토타입 · 시범 운영 중</p>
       <p class="lead a" style="--d:1.4s; margin-top: 10px">세명대 ↔ 제천역·터미널, 같은 시간에 가는 학생끼리 택시 한 대로. 4명이면 1인 2,000원대예요.</p>
     </div>
